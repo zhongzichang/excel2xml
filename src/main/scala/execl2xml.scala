@@ -45,54 +45,55 @@ object Excel2Xml {
   def transform(f: File, dstDir: File): Unit = {
 
     def txSheet(s: Sheet) = {
-      var curRow: Int = 0
       var ths: Array[String] = new Array(0);
       val sb: StringBuilder = StringBuilder.newBuilder
       def txRow(r: Row) = {
-        var curCol: Int = 0
         def txCell(c: Cell) = {
-          if( curRow > 1 ){
+          if( r.getRowNum > 1 ){
             c.getCellType match {
               case Cell.CELL_TYPE_BLANK => {
-                sb ++= "<"+ths(curCol)+">"+"</"+ths(curCol)+">"
+                sb ++= "<"+ths(c.getColumnIndex)+">"+"</"+ths(c.getColumnIndex)+">"
               }
               case Cell.CELL_TYPE_BOOLEAN => {
                 val el = <e>{c.getBooleanCellValue}</e>
-                sb ++= el.copy(label = ths(curCol)).toString
+                sb ++= el.copy(label = ths(c.getColumnIndex)).toString
               }
               case Cell.CELL_TYPE_ERROR => {
                 val el = <e>{c.getErrorCellValue}</e>
-                sb ++= el.copy(label = ths(curCol)).toString
+                sb ++= el.copy(label = ths(c.getColumnIndex)).toString
               }
               case Cell.CELL_TYPE_FORMULA => {
-                sb ++= "<"+ths(curCol)+">"+"</"+ths(curCol)+">"
+                sb ++= "<"+ths(c.getColumnIndex)+">"+"</"+ths(c.getColumnIndex)+">"
               }
               case Cell.CELL_TYPE_NUMERIC => {
-                val el = <e>{c.getNumericCellValue}</e>
-                sb ++= el.copy(label = ths(curCol)).toString
+                if( (c.getNumericCellValue % 1) == 0){
+                  val el = <e>{c.getNumericCellValue.toInt}</e>
+                  sb ++= el.copy(label = ths(c.getColumnIndex)).toString
+                } else {
+                  val el = <e>{c.getNumericCellValue}</e>
+                  sb ++= el.copy(label = ths(c.getColumnIndex)).toString
+                }
               }
               case Cell.CELL_TYPE_STRING => {
                 val el = <e>{c.getStringCellValue}</e>
-                sb ++= el.copy(label = ths(curCol)).toString
+                sb ++= el.copy(label = ths(c.getColumnIndex)).toString
               }
             }
-          } else if ( curRow == 0 ){
-            ths(curCol) = c.getStringCellValue
+          } else if ( r.getRowNum == 0 ){
+            ths(c.getColumnIndex) = c.getStringCellValue
           }
-          curCol = curCol + 1
         }// txCell
 
-        if( curRow == 0 ){
+        if( r.getRowNum == 0 ){
           ths = new Array(r.getLastCellNum)
           r.iterator.asScala.foreach(txCell)
-        } else if( curRow > 1) {
+        } else if( r.getRowNum > 1) {
           sb ++= "<value>"
           r.iterator.asScala.foreach(txCell)
           sb ++= "</value>"
         }
-        curRow = curRow + 1
       }
-      sb ++= "<root>"
+      sb ++= """<?xml version="1.0" encoding="utf-8"?> <root>"""
       s.iterator.asScala.foreach(txRow)
       sb ++= "</root>"
 
