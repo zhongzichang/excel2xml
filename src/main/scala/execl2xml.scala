@@ -36,17 +36,15 @@ object Excel2Xml extends App {
       println("target directory not found.")
       return
     }
-    if (src exists) {
-      val r = """[^~\.].*\.xlsx$""".r
-      def h(f: File) = { transform(f, dst) }
-      def recursiveHandleFiles(f: File): Unit = {
-        if (f.isDirectory)
-          f.listFiles.foreach(recursiveHandleFiles)
-        else if (r.findFirstIn(f.getName).isDefined)
-          h(f)
-      }
-      recursiveHandleFiles(src)
+    val r = """[^~\.].*\.xlsx$""".r
+    def h(f: File) = { transform(f, dst) }
+    def recursiveHandleFiles(f: File): Unit = {
+      if (f.isDirectory)
+        f.listFiles.foreach(recursiveHandleFiles)
+      else if (r.findFirstIn(f.getName).isDefined)
+        h(f)
     }
+    recursiveHandleFiles(src)
   }
 
   def transform(f: File, dstDir: File): Unit = {
