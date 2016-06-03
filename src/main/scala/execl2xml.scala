@@ -22,12 +22,16 @@ import scala.xml
  */
 object Excel2Xml extends App {
 
-  if (args.length == 2)
-    excel2Xml(new File(args(0)), new File(args(1)))
-  else
-    println("usage: excel2xml <src> <dest>")
+  if (args.length >= 2) {
+    var sheetName: String = null
+    if( args.length > 2)
+      sheetName = args(2)
+    excel2Xml(new File(args(0)), new File(args(1)), sheetName)
 
-  def excel2Xml(src: File, dst: File): Unit = {
+  } else
+    println("usage: excel2xml <src> <dest> [sheet]")
+
+  def excel2Xml(src: File, dst: File, sheetName: String): Unit = {
     if (!src.exists) {
       println("source file or directory not found.")
       return
@@ -37,7 +41,7 @@ object Excel2Xml extends App {
       return
     }
     val r = """[^~\.].*\.xlsx$""".r
-    def h(f: File) = { transform(f, dst) }
+    def h(f: File) = { transform(f, dst, sheetName) }
     def recursiveHandleFiles(f: File): Unit = {
       if (f.isDirectory)
         f.listFiles.foreach(recursiveHandleFiles)
@@ -47,11 +51,14 @@ object Excel2Xml extends App {
     recursiveHandleFiles(src)
   }
 
-  def transform(f: File, dstDir: File): Unit = {
+  def transform(f: File, dstDir: File, sheetName: String): Unit = {
 
     new XSSFWorkbook(new FileInputStream(f)).iterator.asScala.foreach(txSheet)
 
-    def txSheet(s: Sheet) = {
+    def txSheet(s: Sheet): Unit = {
+
+      if( sheetName != null && !sheetName.equals(s.getSheetName) )
+        return
 
       // transform the first row
 
