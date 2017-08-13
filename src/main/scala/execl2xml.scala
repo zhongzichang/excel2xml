@@ -60,6 +60,9 @@ object Excel2Xml extends App {
       if( sheetName != null && !sheetName.equals(s.getSheetName) )
         return
 
+      println("transforming sheet " + s.getSheetName)
+
+
       // transform the first row
 
       def txFirstRow(r: Row) : Array[String] = {
